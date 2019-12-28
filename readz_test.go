@@ -184,7 +184,7 @@ func TestNewReaderSplitter(t *testing.T) {
 			b := make([]byte, 100)
 			_, err := r.Read(b)
 			if err != nil {
-				t.Fatal(err)
+				t.Error(err)
 			}
 			fn()
 		}()
