@@ -114,11 +114,11 @@ func (rs *ReaderSplitter) closeReaders() {
 }
 
 // Pipe read from rs.reader into pipe writers
-func (rs *ReaderSplitter) Pipe(ctx context.Context) (int64, error) {
+func (rs *ReaderSplitter) Pipe(ctx context.Context) (n int64, err error) {
 	defer rs.closeWriters()
 	done := make(chan struct{})
 	go func() {
-		rs.n, rs.err = io.Copy(io.MultiWriter(rs.writers...), rs.reader)
+		n, err = io.Copy(io.MultiWriter(rs.writers...), rs.reader)
 		done <- struct{}{}
 	}()
 	select {
@@ -126,7 +126,7 @@ func (rs *ReaderSplitter) Pipe(ctx context.Context) (int64, error) {
 	case <-ctx.Done():
 		rs.closeReaders()
 	}
-	return rs.n, rs.err
+	return
 }
 
 // Reader returns reader by its name
