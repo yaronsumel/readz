@@ -32,7 +32,9 @@ func main() {
 	defer fn()
 	defer rs.Close()
 
-	go rs.Pipe(ctx)
+	go func() {
+		_, _ = rs.Pipe(ctx)
+	}()
 	wg.Add(2)
 
 	go func() {
