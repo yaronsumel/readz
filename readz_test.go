@@ -43,7 +43,7 @@ func getDummyReader(size int64) (*bytes.Buffer, []byte) {
 	return bytes.NewBuffer(b), bcpy
 }
 
-func TestNewUnifiedReader(t *testing.T) {
+func TestReReader(t *testing.T) {
 
 	var (
 		f, b = getDummyReader(2 * 1e+6)
@@ -83,23 +83,23 @@ func TestNewReaderSplitter(t *testing.T) {
 
 		defer fn()
 		defer rs.Close()
-		go rs.Pipe(ctx)
+		go func() {
+			written, err := rs.Pipe(ctx)
+			if written != n {
+				t.Error("number of written bytes are not equal")
+			}
+			if err != nil {
+				t.Error(err)
+			}
+		}()
 
 		byt, err := ioutil.ReadAll(rs.Reader("reader1"))
 		if err != nil {
-			t.Fatal(err)
+			t.Error(err)
 		}
 
 		if !bytes.Equal(byt, b) {
-			t.Fatal("bytes are not equal")
-		}
-
-		if rs.Written() != n {
-			t.Fatal("number of written bytes are not equal")
-		}
-
-		if rs.Error() != nil {
-			t.Fatal(rs.Error())
+			t.Error("bytes are not equal")
 		}
 
 	})
@@ -115,7 +115,15 @@ func TestNewReaderSplitter(t *testing.T) {
 
 		defer fn()
 		defer rs.Close()
-		go rs.Pipe(ctx)
+		go func() {
+			written, err := rs.Pipe(ctx)
+			if written != n {
+				t.Error("number of written bytes are not equal")
+			}
+			if err != nil {
+				t.Error(err)
+			}
+		}()
 
 		wg := sync.WaitGroup{}
 		wg.Add(2)
@@ -124,10 +132,10 @@ func TestNewReaderSplitter(t *testing.T) {
 			defer wg.Done()
 			byt, err := ioutil.ReadAll(rs.Reader("reader1"))
 			if err != nil {
-				t.Fatal(err)
+				t.Error(err)
 			}
 			if !bytes.Equal(byt, b) {
-				t.Fatal("bytes are not equal")
+				t.Error("bytes are not equal")
 			}
 		}()
 
@@ -135,22 +143,14 @@ func TestNewReaderSplitter(t *testing.T) {
 			defer wg.Done()
 			byt, err := ioutil.ReadAll(rs.Reader("reader2"))
 			if err != nil {
-				t.Fatal(err)
+				t.Error(err)
 			}
 			if !bytes.Equal(byt, b) {
-				t.Fatal("bytes are not equal")
+				t.Error("bytes are not equal")
 			}
 		}()
 
 		wg.Wait()
-
-		if rs.Written() != n {
-			t.Fatal("number of written bytes are not equal")
-		}
-
-		if rs.Error() != nil {
-			t.Fatal(rs.Error())
-		}
 
 	})
 
@@ -163,7 +163,15 @@ func TestNewReaderSplitter(t *testing.T) {
 			ctx, fn       = context.WithCancel(context.Background())
 		)
 
-		go rs.Pipe(ctx)
+		go func() {
+			written, err := rs.Pipe(ctx)
+			if written == n {
+				t.Error("number of written bytes are equal")
+			}
+			if err != nil {
+				t.Error("error should not be empty")
+			}
+		}()
 		defer rs.Close()
 
 		wg := sync.WaitGroup{}
@@ -176,7 +184,7 @@ func TestNewReaderSplitter(t *testing.T) {
 			b := make([]byte, 100)
 			_, err := r.Read(b)
 			if err != nil {
-				t.Fatal(err)
+				t.Error(err)
 			}
 			fn()
 		}()
@@ -185,22 +193,14 @@ func TestNewReaderSplitter(t *testing.T) {
 			defer wg.Done()
 			byt, err := ioutil.ReadAll(rs.Reader("reader2"))
 			if err == nil {
-				t.Fatal("err is empty", err)
+				t.Error("err is empty", err)
 			}
 			if bytes.Equal(byt, b) {
-				t.Fatal("bytes are equal")
+				t.Error("bytes are equal")
 			}
 		}()
 
 		wg.Wait()
-
-		if rs.Written() == n {
-			t.Fatal("number of written bytes are equal")
-		}
-
-		if rs.Error() != nil {
-			t.Fatal("error should not be empty")
-		}
 
 	})
 
