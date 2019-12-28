@@ -86,7 +86,7 @@ func TestNewReaderSplitter(t *testing.T) {
 		go func() {
 			written, err := rs.Pipe(ctx)
 			if written != n {
-				t.Error("number of written bytes are not equal")
+				t.Fatal("number of written bytes are not equal")
 			}
 			if err != nil {
 				t.Error(err)
