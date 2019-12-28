@@ -36,35 +36,35 @@ data will copied to pipes writers and exposed back by the Reader method.
 ```go
 
 var (
-			rs            = readz.NewReaderSplitter(f, "reader1", "reader2")
-			ctx, fn       = context.WithCancel(context.Background())
-		)
+	rs            = readz.NewReaderSplitter(f, "reader1", "reader2")
+	ctx, fn       = context.WithCancel(context.Background())
+)
 
-		defer fn()
-		defer rs.Close()
-		go rs.Pipe(ctx)
+defer fn()
+defer rs.Close()
+go rs.Pipe(ctx)
 
-		wg := sync.WaitGroup{}
-		wg.Add(2)
+wg := sync.WaitGroup{}
+wg.Add(2)
 
-		go func() {
-			defer wg.Done()
-			byt, err := ioutil.ReadAll(rs.Reader("reader1"))
-			if err != nil {
-				t.Error(err)
-			}
-      // do something with byt
-		}()
+go func() {
+	defer wg.Done()
+	byt, err := ioutil.ReadAll(rs.Reader("reader1"))
+	if err != nil {
+		t.Error(err)
+	}
+// do something with byt
+}()
 
-		go func() {
-			defer wg.Done()
-			byt, err := ioutil.ReadAll(rs.Reader("reader2"))
-			if err != nil {
-				t.Error(err)
-			}
-      // do something with byt
-		}()
+go func() {
+	defer wg.Done()
+	byt, err := ioutil.ReadAll(rs.Reader("reader2"))
+	if err != nil {
+		t.Error(err)
+	}
+// do something with byt
+}()
 
-		wg.Wait()
+wg.Wait()
 
 ```
