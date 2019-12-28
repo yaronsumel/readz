@@ -65,8 +65,6 @@ type ReaderSplitter struct {
 		pr *io.PipeReader
 		pw *io.PipeWriter
 	}
-	n                            int64
-	err                          error
 	closedReaders, closedWriters bool
 }
 
@@ -114,9 +112,13 @@ func (rs *ReaderSplitter) closeReaders() {
 }
 
 // Pipe read from rs.reader into pipe writers
-func (rs *ReaderSplitter) Pipe(ctx context.Context) (n int64, err error) {
+func (rs *ReaderSplitter) Pipe(ctx context.Context) (int64, error) {
 	defer rs.closeWriters()
-	done := make(chan struct{})
+	var (
+		n    int64
+		err  error
+		done = make(chan struct{})
+	)
 	go func() {
 		n, err = io.Copy(io.MultiWriter(rs.writers...), rs.reader)
 		done <- struct{}{}
@@ -126,7 +128,7 @@ func (rs *ReaderSplitter) Pipe(ctx context.Context) (n int64, err error) {
 	case <-ctx.Done():
 		rs.closeReaders()
 	}
-	return
+	return n, err
 }
 
 // Reader returns reader by its name
