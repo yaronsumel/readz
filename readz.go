@@ -88,50 +88,61 @@ func NewReaderSplitter(r io.Reader, pipeNames ...string) *ReaderSplitter {
 	return rp
 }
 
-// Close all writers and readers that still open
-func (rs *ReaderSplitter) Close() {
-	if !rs.closedReaders {
-		rs.closeReaders()
-	}
-}
-
 // closeWriters all writers
-func (rs *ReaderSplitter) closeWriters() {
+func (rs *ReaderSplitter) closeWriters(err error) {
+	if rs.closedWriters {
+		return
+	}
 	for _, v := range rs.pipes {
-		v.pw.Close()
+		if err != nil {
+			v.pw.CloseWithError(err)
+		} else {
+			v.pw.Close()
+		}
 	}
 	rs.closedWriters = true
 }
 
 // closeReaders all readers
-func (rs *ReaderSplitter) closeReaders() {
+func (rs *ReaderSplitter) closeReaders(err error) {
+	if rs.closedReaders {
+		return
+	}
 	for _, v := range rs.pipes {
-		v.pr.Close()
+		if err != nil {
+			v.pr.CloseWithError(err)
+		} else {
+			v.pr.Close()
+		}
 	}
 	rs.closedReaders = true
 }
 
 // Pipe read from rs.reader into pipe writers
-func (rs *ReaderSplitter) Pipe(ctx context.Context) (int64, error) {
-	defer rs.closeWriters()
-	var (
-		n    int64
-		err  error
-		done = make(chan struct{})
-	)
+func (rs *ReaderSplitter) Pipe(ctx context.Context) {
+
+	defer rs.closeWriters(ctx.Err())
+	done := make(chan error)
+
 	go func() {
-		n, err = io.Copy(io.MultiWriter(rs.writers...), rs.reader)
-		done <- struct{}{}
+		_, err := io.Copy(io.MultiWriter(rs.writers...), rs.reader)
+		done <- err
 	}()
+
 	select {
-	case <-done:
+	// if err was return from io.copy close all readers
+	// in order to prevent data discrepancy between readers
+	case err := <-done:
+		if err != nil {
+			rs.closeReaders(err)
+		}
 	case <-ctx.Done():
-		rs.closeReaders()
+		rs.closeReaders(ctx.Err())
 	}
-	return n, err
+
 }
 
 // Reader returns reader by its name
-func (rs *ReaderSplitter) Reader(name string) io.Reader {
+func (rs *ReaderSplitter) Reader(name string) io.ReadCloser {
 	return rs.pipes[name].pr
 }

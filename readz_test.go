@@ -82,18 +82,12 @@ func TestNewReaderSplitter(t *testing.T) {
 		)
 
 		defer fn()
-		defer rs.Close()
-		go func() {
-			written, err := rs.Pipe(ctx)
-			if written != n {
-				t.Error("number of written bytes are not equal")
-			}
-			if err != nil {
-				t.Error(err)
-			}
-		}()
+		go rs.Pipe(ctx)
 
-		byt, err := ioutil.ReadAll(rs.Reader("reader1"))
+		r := rs.Reader("reader1")
+		defer r.Close()
+
+		byt, err := ioutil.ReadAll(r)
 		if err != nil {
 			t.Error(err)
 		}
@@ -114,23 +108,16 @@ func TestNewReaderSplitter(t *testing.T) {
 		)
 
 		defer fn()
-		defer rs.Close()
-		go func() {
-			written, err := rs.Pipe(ctx)
-			if written != n {
-				t.Error("number of written bytes are not equal")
-			}
-			if err != nil {
-				t.Error(err)
-			}
-		}()
+		go rs.Pipe(ctx)
 
 		wg := sync.WaitGroup{}
 		wg.Add(2)
 
 		go func() {
 			defer wg.Done()
-			byt, err := ioutil.ReadAll(rs.Reader("reader1"))
+			r := rs.Reader("reader1")
+			defer r.Close()
+			byt, err := ioutil.ReadAll(r)
 			if err != nil {
 				t.Error(err)
 			}
@@ -141,7 +128,9 @@ func TestNewReaderSplitter(t *testing.T) {
 
 		go func() {
 			defer wg.Done()
-			byt, err := ioutil.ReadAll(rs.Reader("reader2"))
+			r := rs.Reader("reader2")
+			defer r.Close()
+			byt, err := ioutil.ReadAll(r)
 			if err != nil {
 				t.Error(err)
 			}
@@ -163,35 +152,25 @@ func TestNewReaderSplitter(t *testing.T) {
 			ctx, fn       = context.WithCancel(context.Background())
 		)
 
-		go func() {
-			written, err := rs.Pipe(ctx)
-			if written == n {
-				t.Error("number of written bytes are equal")
-			}
-			if err != nil {
-				t.Error("error should not be empty")
-			}
-		}()
-		defer rs.Close()
+		defer fn()
+		go rs.Pipe(ctx)
 
 		wg := sync.WaitGroup{}
 		wg.Add(2)
 
-		// read a bit and cancel the context
+		// close the reader before reading something
 		go func() {
 			defer wg.Done()
 			r := rs.Reader("reader1")
-			b := make([]byte, 100)
-			_, err := r.Read(b)
-			if err != nil {
-				t.Error(err)
-			}
-			fn()
+			// closing this reader will trigger error on all the other readers
+			r.Close()
 		}()
 
 		go func() {
 			defer wg.Done()
-			byt, err := ioutil.ReadAll(rs.Reader("reader2"))
+			r := rs.Reader("reader2")
+			defer r.Close()
+			byt, err := ioutil.ReadAll(r)
 			if err == nil {
 				t.Error("err is empty", err)
 			}

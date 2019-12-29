@@ -2,12 +2,13 @@ package main
 
 import (
 	"context"
-	"github.com/yaronsumel/readz"
 	"io"
 	"io/ioutil"
 	"log"
 	"os"
 	"sync"
+
+	"github.com/yaronsumel/readz"
 )
 
 // split one file into two files
@@ -30,11 +31,8 @@ func main() {
 	)
 
 	defer fn()
-	defer rs.Close()
 
-	go func() {
-		_, _ = rs.Pipe(ctx)
-	}()
+	go rs.Pipe(ctx)
 	wg.Add(2)
 
 	go func() {
@@ -57,7 +55,9 @@ func handle(fileName string, rs *readz.ReaderSplitter) {
 		log.Panicln(err)
 		return
 	}
-	_, err = io.Copy(f, rs.Reader(fileName))
+	r := rs.Reader(fileName)
+	defer r.Close()
+	_, err = io.Copy(f, r)
 	if err != nil {
 		log.Panicln(err)
 	}
