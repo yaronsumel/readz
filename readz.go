@@ -95,9 +95,9 @@ func (rs *ReaderSplitter) closeWriters(err error) {
 	}
 	for _, v := range rs.pipes {
 		if err != nil {
-			v.pw.CloseWithError(err)
+			_ = v.pw.CloseWithError(err)
 		} else {
-			v.pw.Close()
+			_ = v.pw.Close()
 		}
 	}
 	rs.closedWriters = true
@@ -110,9 +110,9 @@ func (rs *ReaderSplitter) closeReaders(err error) {
 	}
 	for _, v := range rs.pipes {
 		if err != nil {
-			v.pr.CloseWithError(err)
+			_ = v.pr.CloseWithError(err)
 		} else {
-			v.pr.Close()
+			_ = v.pr.Close()
 		}
 	}
 	rs.closedReaders = true
