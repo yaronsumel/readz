@@ -1,4 +1,5 @@
-# readz [![Go Report Card](https://goreportcard.com/badge/github.com/yaronsumel/readz)](https://goreportcard.com/report/github.com/yaronsumel/readz) [![GoDoc](https://godoc.org/github.com/yaronsumel/readz?status.svg)](https://godoc.org/github.com/yaronsumel/readz)
+# readz [![Go Report Card](https://goreportcard.com/badge/github.com/yaronsumel/readz)](https://goreportcard.com/report/github.com/yaronsumel/readz) [![GoDoc](https://godoc.org/github.com/yaronsumel/readz?status.svg)](https://godoc.org/github.com/yaronsumel/readz) [![Actions Status](https://github.com/yaronsumel/readz/workflows/Go/badge.svg)](github.com/yaronsumel/readz/actions)
+
 small util that helps you read stuff from your readers
 
 ### ReReader 
