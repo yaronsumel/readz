@@ -69,8 +69,9 @@ wg.Wait()
 
 ```
 
-### Example
+### Examples
 
+Check out the examples [directory](https://github.com/yaronsumel/readz/blob/master/example) 
 
 ### License
 
